@@ -29,13 +29,13 @@ function crossSection = ComptonPhotonCrossSectionComputation(crossSection, contr
     
     
     crossSection.Compton_photon = r_e^2/2 * (1 + eps_tag .* (1 - mu)).^(-2) .* (1 + mu.^2 + (eps_tag .* (1 - mu)).^2 ./ (1 + eps_tag .* (1 - mu)));
-    crossSection.Compton_photon = crossSection.Compton_photon .* (eps == (eps_tag ./ (1 - eps_tag .* (1 - mu))));
+    crossSection.Compton_photon = control.factor * crossSection.Compton_photon .* (eps == (eps_tag ./ (1 - eps_tag .* (1 - mu))));
     
     crossSection.Compton_photon_0 = 2*pi* sum(crossSection.Compton_photon, 3)       * (2/control.mu_length);
     crossSection.Compton_photon_1 = 2*pi* sum(mu .* crossSection.Compton_photon, 3) * (2/control.mu_length);
     
     eps = control.eps;
-    crossSection.Compton_photon_Tot = 2*pi*r_e^2 * ((1+eps)./(eps.^2).*(2.*(1+eps)./(1+2.*eps) - log(1+2.*eps)./eps) + log(1+2.*eps)./(2*eps) - (1+3.*eps)./((1+2*eps).^2));
+    crossSection.Compton_photon_Tot = control.factor * 2*pi*r_e^2 * ((1+eps)./(eps.^2).*(2.*(1+eps)./(1+2.*eps) - log(1+2.*eps)./eps) + log(1+2.*eps)./(2*eps) - (1+3.*eps)./((1+2*eps).^2));
 end
 
 function crossSection = ComptonElectronCrossSectionComputation(crossSection, control)

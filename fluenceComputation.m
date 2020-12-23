@@ -31,7 +31,7 @@ function psi = fluenceComputation(crossSection, control)
         
         % Checking if the fluence converged
         diff = max(abs(D - P), [], 'all');
-        if ((diff > 1e100) | (diff_old < diff - 0.001))
+        if ((diff > 1e30))% | (diff_old < diff - 0.001))
             psi_new = psi;
             diff = 0;
         end
@@ -43,9 +43,9 @@ function psi = fluenceComputation(crossSection, control)
         % Plotting the dose obtained at each iteration
         if control.draw_dose
             [dose, flux] = doseComputation_aux(psi_new, crossSection, control);
-            plot(control.x*1e-7*1.93*4/1.1, real(dose) ./ max(abs(real(dose))), 'DisplayName', 'Dose Theo'); hold on; 
-            plot(control.x*1e-7*1.93*4/1.1, real(flux) ./ max(abs(real(flux))), 'DisplayName', 'Flux Theo'); hold on; 
-            plot(Sim.x_sim*1e6*1e-7, Sim.dose_sim / max(Sim.dose_sim), 'DisplayName', 'Dose Sim'); hold on;
+            plot(control.x * control.scale_x * 1e-7, real(dose) ./ max(abs(real(dose))), 'DisplayName', 'Dose Theo'); hold on; 
+            plot(control.x * control.scale_x * 1e-7, real(flux) ./ max(abs(real(flux))), 'DisplayName', 'Flux Theo'); hold on; 
+            plot(Sim.x_sim*1e-1*control.x_max/10 * control.scale_x * 1e-7, Sim.dose_sim / max(Sim.dose_sim), 'DisplayName', 'Dose Sim'); hold on;
             graphParams(['Dose  -  $\epsilon_0 = $ ', num2str(control.eps_0), 'MeV'], 'x', '$D(x)/D_{max}$');
             drawnow;
             hold off;
@@ -87,9 +87,6 @@ end
 function R = computeR(psi, crossSection, control)
     R = zeros(size(psi));
     delta_eps = repmat(control.delta_eps, [1 control.x_length]);
-    BC = zeros(size(psi));
-    BC(:, 1, :)   = psi(:, 1, :);
-    BC(:, end, :) = psi(:, end, :);
     
     low_tri = tril(ones(control.energy_length));
     
@@ -108,8 +105,8 @@ function R = computeR(psi, crossSection, control)
         + (low_tri .* crossSection.Electrons_1)      * squeeze(psi(:,:,4))) .* delta_eps ...
         + crossSection.S ./ delta_eps .* squeeze(psi(:,:,4));
     R((2:(control.energy_length)),:,4) = R4((1:(control.energy_length-1)),:);
-    
-    R = R + BC;
+
+    R = computeBoundaryCondition(R, control);
 end
 
 function F = compute_F(psi)

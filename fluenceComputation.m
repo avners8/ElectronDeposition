@@ -10,13 +10,16 @@ function psi = fluenceComputation(crossSection, control)
     psi = computeBoundaryCondition(zeros([control.energy_length control.x_length control.types]), control); 
     rho = permute(repmat(control.rho, [1 control.energy_length control.types]) , [2 1 3]);
     if control.draw_dose
-        load(['Sim_', num2str(control.eps_0), 'MeV.mat']);
+%         load(['Sim_', num2str(control.eps_0), 'MeV.mat']);
         figure();
     end
     diff_old = 1e80;
     % Iterative algorithm
     % We limit the algorithm to max_algorithm_iterations iterations 
     for i = 1 : control.max_algorithm_iterations
+        if(i ~= 0 & mod(i,100) == 0)
+            fprintf('Iteration %d\n', i);
+        end
         F = compute_F(psi);
         R = computeR(psi, crossSection, control);
         
@@ -45,7 +48,7 @@ function psi = fluenceComputation(crossSection, control)
             [dose, flux] = doseComputation_aux(psi_new, crossSection, control);
             plot(control.x * control.scale_x * 1e-7, real(dose) ./ max(abs(real(dose))), 'DisplayName', 'Dose Theo'); hold on; 
             plot(control.x * control.scale_x * 1e-7, real(flux) ./ max(abs(real(flux))), 'DisplayName', 'Flux Theo'); hold on; 
-            plot(Sim.x_sim*1e-1*control.x_max/10 * control.scale_x * 1e-7, Sim.dose_sim / max(Sim.dose_sim), 'DisplayName', 'Dose Sim'); hold on;
+%             plot(Sim.x_sim*1e-1*control.x_max/50 * control.scale_x * 1e-7, Sim.dose_sim / max(Sim.dose_sim), 'DisplayName', 'Dose Sim'); hold on;
             graphParams(['Dose  -  $\epsilon_0 = $ ', num2str(control.eps_0), 'MeV'], 'x', '$D(x)/D_{max}$');
             drawnow;
             hold off;
@@ -61,7 +64,7 @@ end
 
 function psi_bc = computeBoundaryCondition(psi, control)
     % Compute the boundary condition given by the following function
-    psi_bc_func = @(x,eps,omega) control.K * exp(-control.ce .* (control.eps_0 - eps).^2) .* exp(-control.c0 .* (1 - omega).^2) .* (omega>=0);
+    psi_bc_func = @(x,eps,omega) control.K * exp(-(control.eps_0 - eps).^2 / (2*(control.BW^2))) .* exp(-control.c0 .* (1 - omega).^2) .* (omega>=0);
     
     psi_bc = psi;
     x = permute(repmat(control.x, [1 control.energy_length control.mu_length]), [2 1 3]);
